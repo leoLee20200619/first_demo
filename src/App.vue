@@ -1,7 +1,10 @@
 <template>
   <div>
     <a-button class="editable-add-btn" @click="handleAdd">
-      AddQ
+      添加新用户
+    </a-button>
+    <a-button class="editable-add-btn" @click="handleread">
+      重载{{my_key}}
     </a-button>
     <a-table :columns="columns" :data-source="data" bordered>
       <div
@@ -37,7 +40,7 @@
               :style="{ color: filtered ? '#108ee9' : undefined }"
       />
       <template
-              v-for="col in ['name', 'age', 'address']"
+              v-for="col in ['name', 'tel', 'email']"
               :slot="col"
               slot-scope="text, record"
       >
@@ -104,17 +107,17 @@
       },
     },
     {
-      title: 'age',
-      dataIndex: 'age',
+      title: 'tel',
+      dataIndex: 'tel',
       width: '15%',
       scopedSlots: {
         filterDropdown: 'filterDropdown',
         filterIcon: 'filterIcon',
         //customRender: 'customRender',
-        customRender: 'age',
+        customRender: 'tel',
       },
       onFilter: (value, record) =>
-              record.age
+              record.tel
                       .toString()
                       .toLowerCase()
                       .includes(value.toLowerCase()),
@@ -127,17 +130,17 @@
       },
     },
     {
-      title: 'address',
-      dataIndex: 'address',
+      title: 'email',
+      dataIndex: 'email',
       width: '40%',
       scopedSlots: {
         filterDropdown: 'filterDropdown',
         filterIcon: 'filterIcon',
         //customRender: 'customRender',
-        customRender: 'address',
+        customRender: 'email',
       },
       onFilter: (value, record) =>
-              record.address
+              record.email
                       .toString()
                       .toLowerCase()
                       .includes(value.toLowerCase()),
@@ -156,14 +159,14 @@
     },
   ];
   const data = [];
-  for (let i = 0; i < 5; i++) {
-    data.push({
-      key: i.toString(),
-      name: `Edrward ${i}`,
-      age: 32,
-      address: `London Park no. ${i}`,
-    });
-  }
+  // for (let i = 0; i < 5; i++) {
+  //   data.push({
+  //     key: i.toString(),
+  //     name: `Edrward ${i}`,
+  //     tel: 32,
+  //     email: `London Park no. ${i}`,
+  //   });
+  // }
 
   export default {
     data() {
@@ -175,10 +178,38 @@
         searchedColumn: '',
         columns,
         editingKey: '',
-        count: data.length,
+        count: 0,
+        my_key:0,
+        max_key:0,
       };
     },
     methods: {
+      handleread:function () {
+            var url = 'http://localhost:8080/users/?skip=0&limit=100'
+            this.axios.get(url)
+                .then(res => {
+                    //console.log(res.data[0]['name'])
+                  const temp_data = []
+                  const key_list =[]
+                  for (let i = 0; i < res.data.length; i++) {
+                    key_list.push(res.data[i]['id'] - 1);
+                    temp_data.push({
+                      key: res.data[i]['id'] - 1,
+                      name: res.data[i]['name'],
+                      tel: res.data[i]['tel'],
+                      email: res.data[i]['email'],
+                    });
+                  }
+                  if (key_list.length === 0) {this.max_key = -1;}
+                  else{this.max_key =  key_list[0];}
+                  key_list.sort(function(a,b){return b-a});
+                  this.data = temp_data;
+                })
+                .catch(err => {
+                    alert(err)
+                })
+
+      },
       handleChange(value, key, column) {
         const newData = [...this.data];
         const target = newData.filter(item => key === item.key)[0];
@@ -196,19 +227,45 @@
           Object.assign(target, this.cacheData.filter(item => key === item.key)[0]);
           delete target.editable;
         }
+
+        var url = 'http://localhost:8080/users/' + (key+1).toString()
+        this.my_key = url
+        this.axios.delete(url)
+                .then(res => {
+                  console.log(res)
+                })
+                .catch(err => {
+                  alert(err)
+                })
       },
       handleAdd() {
-        const { count, data } = this;
+        const { max_key, data } = this;
+        const cur_key = max_key + 1
         const newData = {
-          key: count,
-          name: `Edward King ${count}`,
-          age: 777,
-          address: `London, Park Lane no. ${count}`,
+          key: cur_key,
+          name: "XXX" + cur_key.toString(),
+          tel: "XXX" + cur_key.toString(),
+          email: "XXX" + cur_key.toString(),
         };
         this.data = [...data, newData];
-        this.count = count + 1;
         this.cacheData = this.data.map(item => ({ ...item }));
         this.editingKey = '';
+        this.max_key = cur_key
+
+
+        var url = 'http://localhost:8080/users'
+        this.axios.post(url,{
+                  id: cur_key,
+                  name: "XXX" + cur_key.toString(),
+                  tel: "XXX" + cur_key.toString(),
+                  email: "XXX" + cur_key.toString()
+                })
+                .then(res => {
+                  console.log(res)
+                })
+                .catch(err => {
+                  alert(err)
+                })
       },
       edit(key) {
         const newData = [...this.data];
@@ -231,6 +288,20 @@
           this.cacheData = newCacheData;
         }
         this.editingKey = '';
+
+        var url = 'http://localhost:8080/users/' + (key+1).toString()
+        this.axios.put(url,{
+                      id: key+1,
+                      name: this.data.filter(item => key === item.key)[0]['name'],
+                      tel: this.data.filter(item => key === item.key)[0]['tel'],
+                      email: this.data.filter(item => key === item.key)[0]['email']
+                    })
+                .then(res => {
+                  console.log(res)
+                })
+                .catch(err => {
+                  alert(err)
+                })
       },
       cancel(key) {
         const newData = [...this.data];
