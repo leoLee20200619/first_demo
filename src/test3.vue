@@ -1,5 +1,5 @@
 <template>
-    <a-table :data-source="data" :columns="columns">
+    <a-table :data-source="data" :columns="columns" bordered>
         <div
                 slot="filterDropdown"
                 slot-scope="{ setSelectedKeys, selectedKeys, confirm, clearFilters, column }"
@@ -33,24 +33,24 @@
                 :style="{ color: filtered ? '#108ee9' : undefined }"
         />
         <template slot="customRender" slot-scope="text, record, index, column">
-      <span v-if="searchText && searchedColumn === column.dataIndex">
-        <template
-                v-for="(fragment, i) in text
-            .toString()
-            .split(new RegExp(`(?<=${searchText})|(?=${searchText})`, 'i'))"
-        >
-          <mark
-                  v-if="fragment.toLowerCase() === searchText.toLowerCase()"
-                  :key="i"
-                  class="highlight"
-          >{{ fragment }}</mark
-          >
-          <template v-else>{{ fragment }}</template>
-        </template>
-      </span>
-            <template v-else>
-                {{ text }}
+          <span v-if="searchText && searchedColumn === column.dataIndex">
+            <template
+                    v-for="(fragment, i) in text
+                .toString()
+                .split(new RegExp(`(?<=${searchText})|(?=${searchText})`, 'i'))"
+            >
+              <mark
+                      v-if="fragment.toLowerCase() === searchText.toLowerCase()"
+                      :key="i"
+                      class="highlight"
+              >{{ fragment }}</mark
+              >
+              <template v-else>{{ fragment }}</template>
             </template>
+          </span>
+                <template v-else>
+                    {{ text }}
+                </template>
         </template>
     </a-table>
 </template>
@@ -84,6 +84,7 @@
     ];
 
     export default {
+
         data() {
             return {
                 data,
@@ -161,7 +162,18 @@
             };
         },
         methods: {
+            // mounted1: function () {
+            //     var url = 'http://localhost:8080/users/?skip=0&limit=100'
+            //     this.axios.get(url)
+            //         .then(res => {
+            //             console.log(res.data[0])
+            //         })
+            //         .catch(err => {
+            //             alert(err)
+            //         })
+            // },
             handleSearch(selectedKeys, confirm, dataIndex) {
+                //this.mounted1();
                 confirm();
                 this.searchText = selectedKeys[0];
                 this.searchedColumn = dataIndex;

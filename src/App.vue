@@ -4,6 +4,38 @@
       AddQ
     </a-button>
     <a-table :columns="columns" :data-source="data" bordered>
+      <div
+              slot="filterDropdown"
+              slot-scope="{ setSelectedKeys, selectedKeys, confirm, clearFilters, column }"
+              style="padding: 8px"
+      >
+        <a-input
+                v-ant-ref="c => (searchInput = c)"
+                :placeholder="`Search ${column.dataIndex}`"
+                :value="selectedKeys[0]"
+                style="width: 188px; margin-bottom: 8px; display: block;"
+                @change="e => setSelectedKeys(e.target.value ? [e.target.value] : [])"
+                @pressEnter="() => handleSearch(selectedKeys, confirm, column.dataIndex)"
+        />
+        <a-button
+                type="primary"
+                icon="search"
+                size="small"
+                style="width: 90px; margin-right: 8px"
+                @click="() => handleSearch(selectedKeys, confirm, column.dataIndex)"
+        >
+          Search
+        </a-button>
+        <a-button size="small" style="width: 90px" @click="() => handleReset(clearFilters)">
+          Reset
+        </a-button>
+      </div>
+      <a-icon
+              slot="filterIcon"
+              slot-scope="filtered"
+              type="search"
+              :style="{ color: filtered ? '#108ee9' : undefined }"
+      />
       <template
               v-for="col in ['name', 'age', 'address']"
               :slot="col"
@@ -21,9 +53,7 @@
           </template>
         </div>
       </template>
-      <template slot="name" slot-scope="text, record">
-        <editable-cell :text="text" @change="handleChange(record.key, 'name', $event)" />
-      </template>
+
       <template slot="operation" slot-scope="text, record">
         <div class="editable-row-operations">
         <span v-if="record.editable">
@@ -54,19 +84,70 @@
       title: 'name',
       dataIndex: 'name',
       width: '25%',
-      scopedSlots: { customRender: 'name' },
+      scopedSlots: {
+        filterDropdown: 'filterDropdown',
+        filterIcon: 'filterIcon',
+        //customRender: 'customRender',
+        customRender: 'name',
+      },
+      onFilter: (value, record) =>
+              record.name
+                      .toString()
+                      .toLowerCase()
+                      .includes(value.toLowerCase()),
+      onFilterDropdownVisibleChange: visible => {
+        if (visible) {
+          setTimeout(() => {
+            this.searchInput.focus();
+          }, 0);
+        }
+      },
     },
     {
       title: 'age',
       dataIndex: 'age',
       width: '15%',
-      scopedSlots: { customRender: 'age' },
+      scopedSlots: {
+        filterDropdown: 'filterDropdown',
+        filterIcon: 'filterIcon',
+        //customRender: 'customRender',
+        customRender: 'age',
+      },
+      onFilter: (value, record) =>
+              record.age
+                      .toString()
+                      .toLowerCase()
+                      .includes(value.toLowerCase()),
+      onFilterDropdownVisibleChange: visible => {
+        if (visible) {
+          setTimeout(() => {
+            this.searchInput.focus();
+          });
+        }
+      },
     },
     {
       title: 'address',
       dataIndex: 'address',
       width: '40%',
-      scopedSlots: { customRender: 'address' },
+      scopedSlots: {
+        filterDropdown: 'filterDropdown',
+        filterIcon: 'filterIcon',
+        //customRender: 'customRender',
+        customRender: 'address',
+      },
+      onFilter: (value, record) =>
+              record.address
+                      .toString()
+                      .toLowerCase()
+                      .includes(value.toLowerCase()),
+      onFilterDropdownVisibleChange: visible => {
+        if (visible) {
+          setTimeout(() => {
+            this.searchInput.focus();
+          });
+        }
+      },
     },
     {
       title: 'operation',
@@ -83,15 +164,15 @@
       address: `London Park no. ${i}`,
     });
   }
-  import EditableCell from './edit.vue'
+
   export default {
-    components: {
-      EditableCell,
-    },
     data() {
       this.cacheData = data.map(item => ({ ...item }));
       return {
         data,
+        searchText: '',
+        searchInput: null,
+        searchedColumn: '',
         columns,
         editingKey: '',
         count: data.length,
@@ -126,6 +207,8 @@
         };
         this.data = [...data, newData];
         this.count = count + 1;
+        this.cacheData = this.data.map(item => ({ ...item }));
+        this.editingKey = '';
       },
       edit(key) {
         const newData = [...this.data];
@@ -158,6 +241,17 @@
           delete target.editable;
           this.data = newData;
         }
+      },
+
+      handleSearch(selectedKeys, confirm, dataIndex) {
+        confirm();
+        this.searchText = selectedKeys[0];
+        this.searchedColumn = dataIndex;
+      },
+
+      handleReset(clearFilters) {
+        clearFilters();
+        this.searchText = '';
       },
     },
   };
