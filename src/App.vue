@@ -1,10 +1,10 @@
 <template>
   <div>
+    <a-button class="editable-add-btn" @click="handleread">
+      查看全部用户{{temp_value}}
+    </a-button>
     <a-button class="editable-add-btn" @click="handleAdd">
       添加新用户
-    </a-button>
-    <a-button class="editable-add-btn" @click="handleread">
-      重载{{my_key}}
     </a-button>
     <a-table :columns="columns" :data-source="data" bordered>
       <div
@@ -179,8 +179,8 @@
         columns,
         editingKey: '',
         count: 0,
-        my_key:0,
         max_key:0,
+        temp_value:0,
       };
     },
     methods: {
@@ -201,9 +201,10 @@
                     });
                   }
                   if (key_list.length === 0) {this.max_key = -1;}
-                  else{this.max_key =  key_list[0];}
-                  key_list.sort(function(a,b){return b-a});
+                  else{key_list.sort(function(a,b){return b-a});
+                    this.max_key =  key_list[0];}
                   this.data = temp_data;
+                  this.temp_value = this.max_key;
                 })
                 .catch(err => {
                     alert(err)
@@ -229,7 +230,6 @@
         }
 
         var url = 'http://localhost:8080/users/' + (key+1).toString()
-        this.my_key = url
         this.axios.delete(url)
                 .then(res => {
                   console.log(res)
