@@ -8,6 +8,7 @@ module.exports = {
         proxy: {
             '/users': {
                 target: 'http://localhost:8000',
+                //target: 'http://172.19.83.92:8000',
                 changeOrigin: true,
             }
         }

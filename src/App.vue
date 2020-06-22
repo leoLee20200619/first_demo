@@ -185,7 +185,7 @@
     },
     methods: {
       handleread:function () {
-            var url = 'http://localhost:8080/users/?skip=0&limit=100'
+            var url = 'http://172.19.83.92:8080/users/?skip=0&limit=100'
             this.axios.get(url)
                 .then(res => {
                     //console.log(res.data[0]['name'])
@@ -229,7 +229,7 @@
           delete target.editable;
         }
 
-        var url = 'http://localhost:8080/users/' + (key+1).toString()
+        var url = 'http://172.19.83.92:8080/users/' + (key+1).toString()
         this.axios.delete(url)
                 .then(res => {
                   console.log(res)
@@ -253,7 +253,7 @@
         this.max_key = cur_key
 
 
-        var url = 'http://localhost:8080/users'
+        var url = 'http://172.19.83.92:8080/users/'
         this.axios.post(url,{
                   id: cur_key,
                   name: "XXX" + cur_key.toString(),
@@ -289,7 +289,7 @@
         }
         this.editingKey = '';
 
-        var url = 'http://localhost:8080/users/' + (key+1).toString()
+        var url = 'http://172.19.83.92:8080/users/' + (key+1).toString()
         this.axios.put(url,{
                       id: key+1,
                       name: this.data.filter(item => key === item.key)[0]['name'],
