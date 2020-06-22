@@ -73,7 +73,8 @@
           </a-popconfirm>
         </span>
           <span v-else>
-          <a :disabled="editingKey !== ''" @click="() => edit(record.key)">Edit</a>
+            <a :disabled="editingKey !== ''" @click="() => edit(record.key)">Edit</a>
+<!--            <a :disabled="editingKey !== ''" @click="() => edit(record.key)">delete</a>-->
         </span>
         </div>
       </template>
@@ -252,7 +253,6 @@
         this.editingKey = '';
         this.max_key = cur_key
 
-
         var url = 'http://172.19.83.92:8080/users/'
         this.axios.post(url,{
                   id: cur_key,
@@ -279,22 +279,14 @@
       save(key) {
         const newData = [...this.data];
         const newCacheData = [...this.cacheData];
-        const target = newData.filter(item => key === item.key)[0];
-        const targetCache = newCacheData.filter(item => key === item.key)[0];
-        if (target && targetCache) {
-          delete target.editable;
-          this.data = newData;
-          Object.assign(targetCache, target);
-          this.cacheData = newCacheData;
-        }
-        this.editingKey = '';
+
 
         var url = 'http://172.19.83.92:8080/users/' + (key+1).toString()
         this.axios.put(url,{
                       id: key+1,
-                      name: this.data.filter(item => key === item.key)[0]['name'],
-                      tel: this.data.filter(item => key === item.key)[0]['tel'],
-                      email: this.data.filter(item => key === item.key)[0]['email']
+                      name: newData.filter(item => key === item.key)[0]['name'],
+                      tel: newData.filter(item => key === item.key)[0]['tel'],
+                      email: newData.filter(item => key === item.key)[0]['email']
                     })
                 .then(res => {
                   console.log(res)
@@ -302,6 +294,23 @@
                 .catch(err => {
                   alert(err)
                 })
+
+        const target = newData.filter(item => key === item.key)[0];
+        //const targetCache = newCacheData.filter(item => key === item.key)[0];
+        // if (target && targetCache) {
+        //   delete target.editable;
+        //   this.data = newData;
+        //   Object.assign(targetCache, target);
+        //   this.cacheData = newCacheData;
+        // }
+        if (target) {
+          Object.assign(target, this.cacheData.filter(item => key === item.key)[0]);
+          delete target.editable;
+          this.data = newData;
+          this.cacheData = newCacheData;
+          delete target.editable;
+        }
+        this.editingKey = '';
       },
       cancel(key) {
         const newData = [...this.data];
