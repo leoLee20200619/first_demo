@@ -1,11 +1,29 @@
 <template>
   <div>
-    <a-button class="editable-add-btn" @click="handleread">
-      查看全部用户{{temp_value}}
-    </a-button>
-    <a-button class="editable-add-btn" @click="handleAdd">
-      添加新用户
-    </a-button>
+<!--    <a-button class="editable-add-btn" @click="handleread">-->
+<!--      查看全部用户{{temp_value}}-->
+<!--    </a-button>-->
+    <div>
+      <a-button type="primary" @click="showModal">
+        新增用户{{temp_value}}
+      </a-button>
+      <a-modal v-model="visible" title="新增用户信息" @ok="handleOk">
+        <a-form :form="form" :label-col="{ span: 5 }" :wrapper-col="{ span: 12 }">
+          <a-form-item label="Name">
+            <a-input v-model = input_name />
+          </a-form-item>
+          <a-form-item label="Telephone">
+            <a-input v-model = input_tel />
+          </a-form-item>
+          <a-form-item label="Email">
+            <a-input v-model = input_email />
+          </a-form-item>
+        </a-form>
+      </a-modal>
+    </div>
+<!--    <a-button class="editable-add-btn" @click="handleAdd">-->
+<!--      添加新用户{{temp_value}}-->
+<!--    </a-button>-->
     <a-table :columns="columns" :data-source="data" bordered>
       <div
               slot="filterDropdown"
@@ -61,20 +79,26 @@
         <div class="editable-row-operations">
         <span v-if="record.editable">
           <a @click="() => save(record.key)">Save</a>
-          <a-popconfirm
-                  v-if="data.length"
-                  title="Sure to delete?"
-                  @confirm="() => onDelete(record.key)"
-          >
-            <a href="javascript:;">Delete</a>
-          </a-popconfirm>
+<!--          <a-popconfirm-->
+<!--                  v-if="data.length"-->
+<!--                  title="Sure to delete?"-->
+<!--                  @confirm="() => onDelete(record.key)"-->
+<!--          >-->
+<!--            <a href="javascript:;">Delete</a>-->
+<!--          </a-popconfirm>-->
           <a-popconfirm title="Sure to cancel?" @confirm="() => cancel(record.key)">
             <a>Cancel</a>
           </a-popconfirm>
         </span>
           <span v-else>
             <a :disabled="editingKey !== ''" @click="() => edit(record.key)">Edit</a>
-<!--            <a :disabled="editingKey !== ''" @click="() => edit(record.key)">delete</a>-->
+            <a-popconfirm
+                    v-if="data.length"
+                    title="Sure to delete?"
+                    @confirm="() => onDelete(record.key)"
+            >
+            <a href="javascript:;">Delete</a>
+          </a-popconfirm>
         </span>
         </div>
       </template>
@@ -84,6 +108,29 @@
 </template>
 <script>
   const columns = [
+    {
+      title: 'id',
+      dataIndex: 'id',
+      width: '5%',
+      scopedSlots: {
+        filterDropdown: 'filterDropdown',
+        filterIcon: 'filterIcon',
+        //customRender: 'customRender',
+        customRender: 'id',
+      },
+      onFilter: (value, record) =>
+              record.id
+                      .toString()
+                      .toLowerCase()
+                      .includes(value.toLowerCase()),
+      onFilterDropdownVisibleChange: visible => {
+        if (visible) {
+          setTimeout(() => {
+            this.searchInput.focus();
+          }, 0);
+        }
+      },
+    },
     {
       title: 'name',
       dataIndex: 'name',
@@ -133,7 +180,7 @@
     {
       title: 'email',
       dataIndex: 'email',
-      width: '40%',
+      width: '35%',
       scopedSlots: {
         filterDropdown: 'filterDropdown',
         filterIcon: 'filterIcon',
@@ -181,7 +228,12 @@
         editingKey: '',
         count: 0,
         max_key:0,
-        temp_value:0,
+        temp_value: 0,
+        visible: false,
+        form: this.$form.createForm(this, { name: 'coordinated' }),
+        input_name: '',
+        input_tel: '',
+        input_email: '',
       };
     },
     methods: {
@@ -201,11 +253,11 @@
                       email: res.data[i]['email'],
                     });
                   }
-                  if (key_list.length === 0) {this.max_key = -1;}
-                  else{key_list.sort(function(a,b){return b-a});
-                    this.max_key =  key_list[0];}
+                  // if (key_list.length === 0) {this.max_key = -1;}
+                  // else{key_list.sort(function(a,b){return b-a});
+                  //   this.max_key =  key_list[0];}
                   this.data = temp_data;
-                  this.temp_value = this.max_key;
+                  //this.temp_value = this.max_key;
                 })
                 .catch(err => {
                     alert(err)
@@ -230,7 +282,7 @@
           delete target.editable;
         }
 
-        var url = 'http://172.19.83.92:8080/users/' + (key+1).toString()
+        var url = 'http://172.19.83.92:8080/users/' + (target['id']).toString()
         this.axios.delete(url)
                 .then(res => {
                   console.log(res)
@@ -239,6 +291,7 @@
                   alert(err)
                 })
       },
+
       handleAdd() {
         const { max_key, data } = this;
         const cur_key = max_key + 1
@@ -251,7 +304,7 @@
         this.data = [...data, newData];
         this.cacheData = this.data.map(item => ({ ...item }));
         this.editingKey = '';
-        this.max_key = cur_key
+        //this.max_key = cur_key
 
         var url = 'http://172.19.83.92:8080/users/'
         this.axios.post(url,{
@@ -279,23 +332,24 @@
       save(key) {
         const newData = [...this.data];
         const newCacheData = [...this.cacheData];
+        var target = newData.filter(item => key === item.key)[0];
+        this.temp_value = this.data;
 
-
-        var url = 'http://172.19.83.92:8080/users/' + (key+1).toString()
+        var url = 'http://172.19.83.92:8080/users/' + (target['id']).toString()
         this.axios.put(url,{
-                      id: key+1,
+                      id: newData.filter(item => key === item.key)[0]['id'],
                       name: newData.filter(item => key === item.key)[0]['name'],
                       tel: newData.filter(item => key === item.key)[0]['tel'],
                       email: newData.filter(item => key === item.key)[0]['email']
                     })
                 .then(res => {
-                  console.log(res)
+                  console.log(res);
+
                 })
                 .catch(err => {
                   alert(err)
                 })
 
-        const target = newData.filter(item => key === item.key)[0];
         //const targetCache = newCacheData.filter(item => key === item.key)[0];
         // if (target && targetCache) {
         //   delete target.editable;
@@ -311,6 +365,7 @@
           delete target.editable;
         }
         this.editingKey = '';
+
       },
       cancel(key) {
         const newData = [...this.data];
@@ -333,6 +388,113 @@
         clearFilters();
         this.searchText = '';
       },
+
+      showModal() {
+          this.visible = true;
+        },
+      handleOk() {
+        var url = 'http://172.19.83.92:8080/users/?skip=0&limit=100'
+        this.axios.get(url)
+                .then(res => {
+                  var max_key = 0
+                  var key_list =[]
+                  for (let i = 0; i < res.data.length; i++) {
+                    if (res.data[i]['id'] > max_key) {max_key = res.data[i]['id'];}
+                    key_list.push(res.data[i]['id']);
+                  }
+                  if (key_list.length === 0) {max_key = 0;}
+                  else{key_list.sort(function(a,b){return b-a});
+                    max_key =  key_list[0];}
+                  //max_key = res.data[res.data.length-1]['id'];
+                  //this.temp_value = max_key;
+                  this.max_key = max_key + 1;
+                  //this.temp_value = this.max_key;
+
+                  const { data } = this;
+                  const cur_key = data.length
+                  const newData = {
+                    key: cur_key,
+                    id: max_key + 1,
+                    name: this.input_name,
+                    tel: this.input_tel,
+                    email: this.input_email,
+                  };
+                  this.data = [...data, newData];
+                  this.cacheData = this.data.map(item => ({ ...item }));
+                  this.editingKey = '';
+                  //this.max_key = cur_key
+
+                  this.input_name = '';
+                  this.input_tel = '';
+                  this.input_email = '';
+                  this.visible = false;
+                })
+                .catch(err => {
+                  alert(err)
+                })
+        this.temp_value = this.max_key;
+        var cur_id = this.temp_value;
+        //this.temp_value = cur_id;
+        url = 'http://172.19.83.92:8080/users/'
+        this.axios.post(url,{
+                id: cur_id,
+                name: this.input_name,
+                tel: this.input_tel,
+                email: this.input_email
+              })
+                  .then(res => {
+                    console.log(res)
+                  })
+                  .catch(err => {
+                    alert(err)
+                  })
+
+        // const { data } = this;
+        // const cur_key = data.length
+        // const newData = {
+        //   key: cur_key,
+        //   id: cur_id,
+        //   name: this.input_name,
+        //   tel: this.input_tel,
+        //   email: this.input_email,
+        // };
+        // this.data = [...data, newData];
+        // this.cacheData = this.data.map(item => ({ ...item }));
+        // this.editingKey = '';
+        // //this.max_key = cur_key
+        //
+        // this.input_name = '';
+        // this.input_tel = '';
+        // this.input_email = '';
+        // this.visible = false;
+      },
+    },
+    created: function(){
+      var url = 'http://172.19.83.92:8080/users/?skip=0&limit=100'
+      this.axios.get(url)
+              .then(res => {
+                //console.log(res.data[0]['name'])
+                const temp_data = []
+                const key_list =[]
+                for (let i = 0; i < res.data.length; i++) {
+                  key_list.push(res.data[i]['id'] - 1);
+                  temp_data.push({
+                    key: i,
+                    id: res.data[i]['id'],
+                    name: res.data[i]['name'],
+                    tel: res.data[i]['tel'],
+                    email: res.data[i]['email'],
+                  });
+                }
+                // if (key_list.length === 0) {this.max_key = -1;}
+                // else{key_list.sort(function(a,b){return b-a});
+                //   this.max_key =  key_list[0];}
+                this.data = temp_data;
+                //this.temp_value = this.max_key;
+              })
+              .catch(err => {
+                alert(err)
+              })
     },
   };
 </script>
